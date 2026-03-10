@@ -1,0 +1,158 @@
+/* ═══════════════════════════════════════════════════════════════
+   THEME: FOLIO (light, professional, rounded)
+═══════════════════════════════════════════════════════════════ */
+[data-theme="folio"] {
+  --bg:           #f0ebe2;
+  --bg-card:      #ffffff;
+  --bg-card-hover:#fafaf8;
+  --text:         #0a0a0a;
+  --text-dim:     #333333;
+  --text-muted:   #888888;
+  --border:       #d4cfc7;
+  --tag-bg:       #0a0a0a;
+  --tag-text:     #f0ebe2;
+  --link-color:   #0a0a0a;
+  --switcher-bg:  #0a0a0a;
+  --switcher-active: #f0ebe2;
+  --switcher-text:#666666;
+  --font-heading: 'Inter', sans-serif;
+  --font-body:    'Inter', sans-serif;
+  --font-mono:    'Space Mono', monospace;
+  --radius:       8px;
+  --transition:   0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  --accent:       #2563eb;
+}
+
+[data-theme="folio"] .projects-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 0 40px 80px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+[data-theme="folio"] .card {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  background: var(--bg-card);
+  transition: background var(--transition), border-color var(--transition), box-shadow var(--transition);
+}
+
+[data-theme="folio"] .card:hover {
+  background: var(--bg-card-hover);
+  border-color: var(--card-accent, rgba(0,0,0,0.2));
+  box-shadow: 0 0 40px -12px var(--card-accent, transparent);
+}
+
+[data-theme="folio"] .card.featured {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  min-height: 380px;
+}
+
+[data-theme="folio"] .card:not(.featured) {
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  min-height: 180px;
+}
+
+[data-theme="folio"] .card-img-wrap {
+  overflow: hidden;
+  position: relative;
+}
+
+[data-theme="folio"] .card.featured .card-img-wrap { min-height: 380px; }
+[data-theme="folio"] .card:not(.featured) .card-img-wrap { min-height: 180px; }
+
+[data-theme="folio"] .card.featured .card-img-wrap::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to right, transparent 50%, var(--bg-card) 95%);
+  pointer-events: none;
+  z-index: 1;
+}
+
+[data-theme="folio"] .card-img-wrap img,
+[data-theme="folio"] .card-img-wrap .img-placeholder {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.5s ease;
+}
+
+[data-theme="folio"] .card:hover .card-img-wrap img,
+[data-theme="folio"] .card:hover .card-img-wrap .img-placeholder {
+  transform: scale(1.03);
+}
+
+[data-theme="folio"] .card-body {
+  padding: 32px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 12px;
+}
+
+[data-theme="folio"] .card:not(.featured) .card-body {
+  padding: 24px 28px;
+  gap: 8px;
+}
+
+[data-theme="folio"] .card-accent-bar {
+  width: 3px;
+  height: 24px;
+  border-radius: 2px;
+  background: var(--card-accent, #333333);
+  display: block;
+}
+
+[data-theme="folio"] .card-title {
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--text);
+  line-height: 1.2;
+}
+
+[data-theme="folio"] .card:not(.featured) .card-title { font-size: 16px; }
+
+[data-theme="folio"] .card-subtitle {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  color: var(--card-accent, var(--accent));
+  text-transform: uppercase;
+}
+
+[data-theme="folio"] .card-description {
+  font-size: 14px;
+  line-height: 1.7;
+  color: var(--text-dim);
+  display: -webkit-box;
+  -webkit-line-clamp: 4;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+[data-theme="folio"] .card:not(.featured) .card-description {
+  font-size: 13px;
+  -webkit-line-clamp: 2;
+}
+
+[data-theme="folio"] .mywork-list li::before { color: var(--card-accent, var(--text-muted)); content: '▸'; }
+
+[data-theme="folio"] .card-link { color: var(--card-accent, var(--link-color)); }
+
+[data-theme="folio"] .card.no-image { grid-template-columns: 1fr; }
+
+@media (max-width: 768px) {
+  [data-theme="folio"] .projects-grid { padding: 0 20px 60px; }
+  [data-theme="folio"] .card.featured,
+  [data-theme="folio"] .card:not(.featured) { grid-template-columns: 1fr; }
+  [data-theme="folio"] .card.featured .card-img-wrap,
+  [data-theme="folio"] .card:not(.featured) .card-img-wrap { min-height: 220px; }
+}

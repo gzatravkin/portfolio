@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="folio">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Portfolio — Grigoriy Zatravkin</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
+
+  <link rel="stylesheet" href="styles/base.css" />
+  <link rel="stylesheet" href="styles/theme-minimal.css" />
+  <link rel="stylesheet" href="styles/theme-brutalist.css" />
+  <link rel="stylesheet" href="styles/theme-cinematic.css" />
+  <link rel="stylesheet" href="styles/theme-noir.css" />
+  <link rel="stylesheet" href="styles/theme-folio.css" />
+
+</head>
+<body>
+<div id="root">
+
+  <!-- ── Nav ───────────────────────────────────────────────── -->
+  <header class="site-header">
+    <span class="logo" id="nav-logo"></span>
+    <nav class="header-links">
+      <a href="#projects">Work</a>
+      <a id="nav-github" href="#" target="_blank" rel="noopener">GitHub</a>
+      <a id="nav-email" href="#">Contact</a>
+    </nav>
+  </header>
+
+  <!-- ── Hero ──────────────────────────────────────────────── -->
+  <section class="hero">
+    <p class="hero-label" id="hero-label"></p>
+    <h1 class="hero-name" id="hero-name"></h1>
+    <p class="hero-title" id="hero-title"></p>
+    <p class="hero-bio"   id="hero-bio"></p>
+  </section>
+
+  <!-- ── Stats ─────────────────────────────────────────────── -->
+  <div class="stats-section" id="stats-section">
+    <div class="stats-grid" id="stats-grid"></div>
+  </div>
+
+  <!-- ── Projects ──────────────────────────────────────────── -->
+  <section id="projects">
+    <div class="section-header">
+      <p class="section-label">Selected work</p>
+      <h2 class="section-title">Projects</h2>
+    </div>
+    <div class="projects-wrap">
+      <div class="projects-grid" id="projects-grid"></div>
+      <aside class="projects-detail" id="projects-detail"></aside>
+    </div>
+  </section>
+
+  <!-- ── Footer ────────────────────────────────────────────── -->
+  <footer class="site-footer">
+    <div>
+      <p class="footer-name" id="footer-name"></p>
+      <p class="footer-sub"  id="footer-loc"></p>
+    </div>
+    <div class="footer-links" id="footer-links"></div>
+  </footer>
+
+</div><!-- #root -->
+
+<script src="projects.js"></script>
+<script>
+/* ═══════════════════════════════════════════════════════════════
+   HELPERS
+═══════════════════════════════════════════════════════════════ */
+
+function esc(str) {
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+
+function hasImages(project) {
+  return project.images && project.images.length > 0;
+}
+
+function hasRealImage(img) {
+  return img && img.src && img.src.trim() !== '';
+}
+
+/* Generate a deterministic placeholder gradient from project id */
+function placeholderStyle(project) {
+  const accent = project.accentColor || '#888888';
+  return `background: linear-gradient(145deg, ${accent}18 0%, ${accent}08 100%); border: 1px solid ${accent}22;`;
+}
+
+/* ── Carousel builder ──────────────────────────────────────── */
+function buildCarousel(project) {
+  const images = (project.images || []).filter(img => hasRealImage(img));
+  if (images.length === 0) return '';
+
+  if (images.length === 1) {
+    const img = images[0];
+    return `
+      <div style="position:relative;width:100%;height:100%">
+        <img src="${esc(img.src)}" alt="${esc(img.alt || '')}" loading="lazy" />
+        ${img.type === 'gif' ? '<span class="gif-badge">GIF</span>' : ''}
+      </div>`;
+  }
+
+  // Multiple images — carousel
+  const slides = images.map((img, i) => {
+    return `<div class="carousel-slide">
+      <img src="${esc(img.src)}" alt="${esc(img.alt || '')}" loading="lazy" />
+      ${img.type === 'gif' ? '<span class="gif-badge">GIF</span>' : ''}
+    </div>`;
+  }).join('');
+
+  const dots = images.map((_, i) =>
+    `<button class="carousel-dot${i === 0 ? ' active' : ''}" data-idx="${i}" aria-label="Slide ${i+1}"></button>`
+  ).join('');
+
+  return `
+    <div class="carousel" data-carousel>
+      <div class="carousel-track">${slides}</div>
+      <button class="carousel-arrow prev" aria-label="Previous">&#8249;</button>
+      <button class="carousel-arrow next" aria-label="Next">&#8250;</button>
+      <div class="carousel-controls">${dots}</div>
+    </div>`;
+}
+
+/* ── Shared card inner content (theme-agnostic text parts) ── */
+function buildCardMeta(project) {
+  const parts = [];
+  if (project.role)    parts.push(`<span>${esc(project.role)}</span>`);
+  if (project.company) parts.push(`<span>${esc(project.company)}</span>`);
+  if (project.year)    parts.push(`<span>${esc(project.year)}</span>`);
+  if (!parts.length) return '';
+  return `<div class="card-meta">${parts.join('<span class="card-meta-sep">/</span>')}</div>`;
+}
+
+function buildCardTags(project) {
+  if (!project.tags || !project.tags.length) return '';
+  const tags = project.tags.map(t => `<span class="tag">${esc(t)}</span>`).join('');
+  return `<div class="card-tags">${tags}</div>`;
+}
+
+function buildCardLink(project) {
+  if (!project.link) return '';
+  return `<a class="card-link" href="${esc(project.link)}" target="_blank" rel="noopener">View Project</a>`;
+}
+
+function buildCardMyWork(project) {
+  const contribs = project.contributions;
+  if (contribs && contribs.length) {
+    const items = contribs.slice(0, 3).map(c => `<li>${esc(c)}</li>`).join('');
+    return `
+    <div class="card-mywork">
+      <p class="mywork-label">My contribution</p>
+      <ul class="mywork-list">${items}</ul>
+    </div>`;
+  }
+  if (!project.myWork) return '';
+  return `
+    <div class="card-mywork">
+      <p class="mywork-label">My contribution</p>
+      <p class="mywork-text">${esc(project.myWork)}</p>
+    </div>`;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   CARD BUILDERS PER THEME
+═══════════════════════════════════════════════════════════════ */
+
+function buildMinimalCard(project, index) {
+  const featured = project.featured ? 'featured' : '';
+  const accent = project.accentColor || '#888888';
+  const carousel = buildCarousel(project);
+  const noImg = carousel ? '' : 'no-image';
+  return `
+    <article class="card ${featured} ${noImg}" data-project-id="${esc(project.id)}"
+             style="--card-accent: ${accent}">
+      ${carousel ? `<div class="card-img-wrap">${carousel}</div>` : ''}
+      <div class="card-body">
+        ${buildCardMeta(project)}
+        <h3 class="card-title">${esc(project.title)}</h3>
+        ${project.subtitle ? `<p class="card-subtitle">${esc(project.subtitle)}</p>` : ''}
+        ${buildCardTags(project)}
+        ${project.description ? `<p class="card-description">${esc(project.description)}</p>` : ''}
+        ${buildCardMyWork(project)}
+        ${buildCardLink(project)}
+      </div>
+    </article>`;
+}
+
+function buildBrutalistCard(project, index) {
+  const featured = project.featured ? 'featured' : '';
+  const accent = project.accentColor || '#888888';
+  const carousel = buildCarousel(project);
+  const noImg = carousel ? '' : 'no-image';
+  return `
+    <article class="card ${featured} ${noImg}" data-project-id="${esc(project.id)}"
+             style="--card-accent: ${accent}">
+      ${carousel ? `<div class="card-img-wrap">
+        ${carousel}
+        <span class="card-index">${String(index + 1).padStart(2, '0')}</span>
+      </div>` : ''}
+      <div class="card-body">
+        ${buildCardMeta(project)}
+        <h3 class="card-title">${esc(project.title)}</h3>
+        ${project.subtitle ? `<p class="card-subtitle">${esc(project.subtitle)}</p>` : ''}
+        ${buildCardTags(project)}
+        ${project.description ? `<p class="card-description">${esc(project.description)}</p>` : ''}
+        ${buildCardMyWork(project)}
+        ${buildCardLink(project)}
+      </div>
+    </article>`;
+}
+
+function buildCinematicCard(project, index) {
+  const featured = project.featured ? 'featured' : '';
+  const accent = project.accentColor || '#58a6ff';
+  const carousel = buildCarousel(project);
+  const noImg = carousel ? '' : 'no-image';
+  return `
+    <article class="card ${featured} ${noImg}" data-project-id="${esc(project.id)}"
+             style="--card-accent: ${accent}">
+      ${carousel ? `<div class="card-img-wrap">${carousel}</div>` : ''}
+      <div class="card-body">
+        ${project.featured ? '<span class="card-accent-bar"></span>' : ''}
+        ${buildCardMeta(project)}
+        <h3 class="card-title">${esc(project.title)}</h3>
+        ${project.subtitle ? `<p class="card-subtitle">${esc(project.subtitle)}</p>` : ''}
+        ${buildCardTags(project)}
+        ${project.description ? `<p class="card-description">${esc(project.description)}</p>` : ''}
+        ${buildCardMyWork(project)}
+        ${buildCardLink(project)}
+      </div>
+    </article>`;
+}
+
+function buildFolioCard(project, index) {
+  const accent = project.accentColor || '#0a0a0a';
+  const metaParts = [];
+  if (project.role)    metaParts.push(esc(project.role));
+  if (project.company) metaParts.push(esc(project.company));
+  if (project.year)    metaParts.push(esc(project.year));
+  const carousel = buildCarousel(project);
+  const noImg = carousel ? '' : 'no-image';
+  return `
+    <article class="card ${noImg}" data-project-id="${esc(project.id)}"
+             style="--card-accent: ${accent}">
+      ${carousel ? `<div class="card-img-wrap">${carousel}</div>` : ''}
+      <div class="card-body">
+        <span class="card-index">${String(index + 1).padStart(2, '0')}</span>
+        <h3 class="card-title">${esc(project.title)}</h3>
+        ${project.subtitle ? `<p class="card-subtitle">${esc(project.subtitle)}</p>` : ''}
+        ${metaParts.length ? `<p class="card-meta">${metaParts.join(' / ')}</p>` : ''}
+        ${buildCardTags(project)}
+      </div>
+    </article>`;
+}
+
+function buildDetailContent(project) {
+  const contribs = project.contributions || [];
+  const accent = project.accentColor || '#0a0a0a';
+  const metaParts = [];
+  if (project.role)    metaParts.push(esc(project.role));
+  if (project.company) metaParts.push(esc(project.company));
+  if (project.year)    metaParts.push(esc(project.year));
+  return `
+    <div class="detail-accent" style="background: ${accent}"></div>
+    <div class="detail-content" style="--card-accent: ${accent}">
+      <p class="detail-eyebrow">My Contribution</p>
+      <h3 class="detail-title">${esc(project.title)}</h3>
+      ${project.subtitle ? `<p class="detail-subtitle">${esc(project.subtitle)}</p>` : ''}
+      ${metaParts.length ? `<p class="detail-meta">${metaParts.join(' / ')}</p>` : ''}
+      <div class="detail-rule"></div>
+      ${contribs.length ? `
+        <p class="detail-section-label">What I built</p>
+        <ul class="detail-list">
+          ${contribs.map(c => `<li>${esc(c)}</li>`).join('')}
+        </ul>` : ''}
+      ${project.description ? `
+        <div class="detail-rule"></div>
+        <p class="detail-description">${esc(project.description)}</p>` : ''}
+      <div class="detail-rule"></div>
+      <div class="detail-tags">${(project.tags || []).map(t => `<span class="tag">${esc(t)}</span>`).join('')}</div>
+      ${buildCardLink(project)}
+    </div>`;
+}
+
+function activateFolioCard(projectId) {
+  const project = PORTFOLIO.projects.find(p => p.id === projectId);
+  if (!project) return;
+  const panel = document.getElementById('projects-detail');
+  if (panel) panel.innerHTML = buildDetailContent(project);
+  document.querySelectorAll('#projects-grid .card').forEach(card => {
+    card.classList.toggle('folio-active', card.dataset.projectId === projectId);
+  });
+}
+
+function initFolioInteractions() {
+  const grid = document.getElementById('projects-grid');
+  if (!grid) return;
+  grid.querySelectorAll('.card').forEach(card => {
+    card.addEventListener('mouseenter', () => activateFolioCard(card.dataset.projectId));
+    card.addEventListener('click',      () => activateFolioCard(card.dataset.projectId));
+  });
+  const first = grid.querySelector('.card');
+  if (first) activateFolioCard(first.dataset.projectId);
+}
+
+function buildNoirCard(project, index) {
+  const featured = project.featured ? 'featured' : '';
+  const accent = project.accentColor || '#888888';
+
+  const contribs = project.contributions || [];
+  const contribSection = contribs.length ? `
+    <div class="card-contribution" style="--card-accent: ${accent}">
+      <div class="contribution-header">
+        <span class="contribution-label">My Contribution</span>
+        <span class="contribution-rule"></span>
+      </div>
+      <ul class="contribution-list">
+        ${contribs.map(c => `<li>${esc(c)}</li>`).join('')}
+      </ul>
+    </div>` : '';
+
+  const carousel = buildCarousel(project);
+  const noImg = carousel ? '' : 'no-image';
+  return `
+    <article class="card ${featured} ${noImg}" data-project-id="${esc(project.id)}"
+             style="--card-accent: ${accent}">
+      <div class="card-main">
+        ${carousel ? `<div class="card-img-wrap">${carousel}</div>` : ''}
+        <div class="card-body">
+          <span class="card-index">${String(index + 1).padStart(2, '0')}</span>
+          <span class="card-accent-bar"></span>
+          <h3 class="card-title">${esc(project.title)}</h3>
+          ${project.subtitle ? `<p class="card-subtitle">${esc(project.subtitle)}</p>` : ''}
+          ${buildCardTags(project)}
+          ${buildCardMeta(project)}
+          ${project.description ? `<p class="card-description">${esc(project.description)}</p>` : ''}
+          ${buildCardLink(project)}
+        </div>
+      </div>
+      ${contribSection}
+    </article>`;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   MAIN RENDER
+═══════════════════════════════════════════════════════════════ */
+
+function renderOwner() {
+  const o = PORTFOLIO.owner;
+  document.title = `Portfolio — ${o.name}`;
+  document.getElementById('nav-logo').textContent = o.name;
+
+  const ghLink = document.getElementById('nav-github');
+  if (o.github) { ghLink.href = o.github; ghLink.textContent = 'GitHub'; }
+
+  const emailLink = document.getElementById('nav-email');
+  if (o.email) { emailLink.href = `mailto:${o.email}`; emailLink.textContent = 'Email'; }
+
+  const heroLabel = document.getElementById('hero-label');
+  if (heroLabel) heroLabel.textContent = o.tagline || 'Portfolio';
+
+  document.getElementById('hero-name').textContent  = o.name;
+  document.getElementById('hero-title').textContent = o.title || '';
+  document.getElementById('hero-bio').textContent   = o.bio   || '';
+
+  // Stats
+  const statsSection = document.getElementById('stats-section');
+  const statsGrid    = document.getElementById('stats-grid');
+  if (o.stats && o.stats.length) {
+    statsGrid.innerHTML = o.stats.map(s => `
+      <div class="stat-item">
+        <div class="stat-value">${esc(s.value)}</div>
+        <div class="stat-label">${esc(s.label)}</div>
+      </div>`).join('');
+    statsSection.style.display = '';
+  } else {
+    statsSection.style.display = 'none';
+  }
+
+  // Footer
+  document.getElementById('footer-name').textContent = o.name;
+  document.getElementById('footer-loc').textContent  = o.location || '';
+  const footerLinks = document.getElementById('footer-links');
+  const links = [];
+  if (o.github) links.push(`<a href="${esc(o.github)}" target="_blank" rel="noopener">GitHub ↗</a>`);
+  if (o.email)  links.push(`<a href="mailto:${esc(o.email)}">${esc(o.email)}</a>`);
+  footerLinks.innerHTML = links.join('');
+}
+
+function renderProjects() {
+  const theme   = document.documentElement.getAttribute('data-theme') || 'minimal';
+  const grid    = document.getElementById('projects-grid');
+  const builder = theme === 'brutalist' ? buildBrutalistCard
+                : theme === 'cinematic' ? buildCinematicCard
+                : theme === 'noir'      ? buildNoirCard
+                : theme === 'folio'     ? buildCinematicCard
+                : buildMinimalCard;
+
+  grid.innerHTML = PORTFOLIO.projects
+    .map((p, i) => builder(p, i))
+    .join('');
+
+  // Reset detail panel visibility for non-folio themes
+  const detailPanel = document.getElementById('projects-detail');
+  if (detailPanel) detailPanel.innerHTML = '';
+
+  grid.classList.add('fade-in');
+  setTimeout(() => grid.classList.remove('fade-in'), 400);
+
+  // Init carousels
+  grid.querySelectorAll('[data-carousel]').forEach(initCarousel);
+
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   CAROUSEL LOGIC
+═══════════════════════════════════════════════════════════════ */
+
+function initCarousel(carousel) {
+  const track  = carousel.querySelector('.carousel-track');
+  const dots   = carousel.querySelectorAll('.carousel-dot');
+  const prev   = carousel.querySelector('.carousel-arrow.prev');
+  const next   = carousel.querySelector('.carousel-arrow.next');
+  const total  = dots.length;
+  let current  = 0;
+
+  function go(idx) {
+    current = (idx + total) % total;
+    track.style.transform = `translateX(-${current * 100}%)`;
+    dots.forEach((d, i) => d.classList.toggle('active', i === current));
+  }
+
+  if (prev) prev.addEventListener('click', e => { e.stopPropagation(); go(current - 1); });
+  if (next) next.addEventListener('click', e => { e.stopPropagation(); go(current + 1); });
+  dots.forEach(dot => {
+    dot.addEventListener('click', e => { e.stopPropagation(); go(+dot.dataset.idx); });
+  });
+
+  // Auto-advance only for GIFs / multiple real images
+  const slides = carousel.querySelectorAll('.carousel-slide');
+  const hasReal = [...slides].some(s => s.querySelector('img'));
+  if (hasReal && total > 1) {
+    const timer = setInterval(() => go(current + 1), 4000);
+    carousel.addEventListener('mouseenter', () => clearInterval(timer));
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   INIT
+═══════════════════════════════════════════════════════════════ */
+renderOwner();
+renderProjects();
+
+</script>
+</body>
+</html>
