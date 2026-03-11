@@ -13,7 +13,7 @@ const PORTFOLIO = {
     name:     "Grigoriy Zatravkin",
     title:    "Lead Game Engineer",
     tagline:  "Unity, .NET, and CI/CD. The whole game, end to end.",
-    bio:      "Lead Game Engineer working across Unity and .NET — game client, backend, live services, and the CI/CD that holds it together. " +
+    bio:      "Technical leader building and scaling game systems across Unity clients, .NET backends, live services, and CI/CD pipelines. " +
               "From solo Android builds to AAA at EA Sports — nine years, seven titles, over a million copies sold.",
     github:   "https://github.com/gzatravkin",
     email:    "grigoriy.zatravkin@gmail.com",
